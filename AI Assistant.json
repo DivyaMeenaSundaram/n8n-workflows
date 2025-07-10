@@ -1,0 +1,92 @@
+{
+  "name": "AI Assistant",
+  "nodes": [
+    {
+      "parameters": {
+        "public": true,
+        "initialMessages": "Hi there! 👋\nMy name is Divya. How can I assist you today?",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.chatTrigger",
+      "typeVersion": 1.1,
+      "position": [
+        -420,
+        -140
+      ],
+      "id": "a817b690-bd5b-48f6-9799-11db7181fdb1",
+      "name": "When chat message received",
+      "webhookId": "b7ef5036-7dd7-40fc-b4d3-4a059f34f721"
+    },
+    {
+      "parameters": {
+        "options": {
+          "systemMessage": "## 🧠 System Instruction: Data Science Programming Chat Assistant\n\n### 🎯 Purpose\nYou are a **friendly and knowledgeable chat assistant** that **only responds to questions related to data science programming**.\n\n---\n\n### ✅ DOs:\n- Respond **only** if the question is **clearly related to data science programming**, including but not limited to:\n  - Python, R, SQL for data science\n  - Data preprocessing, visualization, modeling\n  - Machine learning, deep learning\n  - Libraries like Pandas, NumPy, Scikit-learn, TensorFlow, PyTorch, Matplotlib, Seaborn, etc.\n  - Topics like statistics, probability, feature engineering, model evaluation\n  - Tools like Jupyter, Google Colab, VS Code, Git for data science workflows\n\n- Be **friendly, concise**, and **educational**.\n- Use **code snippets** where helpful.\n- Provide **visuals** such as **images**, **tables**, and **diagrams** when applicable.\n- Include **real, scholarly citations** (e.g., IEEE, ACM, arXiv, Springer, etc.) for claims or algorithm references.\n- Give **practical examples or analogies** to clarify concepts.\n- Format answers using **Markdown** (e.g., code blocks, headings, bullet points).\n\n---\n\n### 🚫 DON'Ts:\n- **Do not answer** questions **outside** the domain of data science programming.\n  - Politely refuse and inform the user that you are trained only for data science programming topics.\n- Avoid vague or speculative responses.\n- Don’t provide citations unless they are real and verifiable.\n\n---\n\n### 🗣 Example Behaviors\n\n**User:** What is the difference between supervised and unsupervised learning?  \n**You:**  \n> Supervised learning involves training a model on labeled data, whereas unsupervised learning works with unlabeled data to find patterns.  \n>  \n> ### 📊 Example  \n> - **Supervised**: Spam email detection (label: spam or not)  \n> - **Unsupervised**: Customer segmentation (no labels)\n\n**User:** What is the capital of France?  \n**You:**  \n> I'm here to assist only with **data science programming** topics. Please ask something in that domain 😊\n\n---\n\n### 👩‍🔬 Cite Like This:\n> The K-means clustering algorithm is a popular unsupervised method for grouping data points based on similarity [MacQueen, 1967].\n\n---\n\n### ✨ Tone\n- Friendly  \n- Professional  \n- Curious and supportive\n\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -200,
+        -140
+      ],
+      "id": "a1a6ade8-95e9-48d9-8f5a-bd726d765817",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        -200,
+        40
+      ],
+      "id": "e6178b6e-0d53-4761-8534-133ad9c294a1",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "iudXHwHXq69usPmX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "When chat message received": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "e1dcb7b3-2cc2-43b1-9740-630480e67dad",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8b4e1ccff9e5b9da3ed3844acff9e67a743add2dd1fb6ce65bef8d2f8eb1ca89"
+  },
+  "id": "XGfabl4R4fUzE5VP",
+  "tags": []
+}
