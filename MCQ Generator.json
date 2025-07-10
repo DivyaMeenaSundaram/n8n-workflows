@@ -1,0 +1,374 @@
+{
+  "name": "MCQ Generator",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Upload File",
+        "formDescription": "Upload a file",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "File",
+              "fieldType": "file",
+              "multipleFiles": false,
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Number of Questions",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "5"
+                  },
+                  {
+                    "option": "10"
+                  },
+                  {
+                    "option": "15"
+                  },
+                  {
+                    "option": "20"
+                  }
+                ]
+              },
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Output Format",
+              "fieldType": "dropdown",
+              "fieldOptions": {
+                "values": [
+                  {
+                    "option": "List"
+                  },
+                  {
+                    "option": "Table"
+                  }
+                ]
+              },
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        -500,
+        -260
+      ],
+      "id": "74d2c31e-6f09-44ac-aa7e-4dfc45a4a1d8",
+      "name": "On form submission",
+      "webhookId": "e60b1a1e-e7a4-4e96-b2e2-d03bb5846826"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.text }}",
+        "options": {
+          "systemMessage": "=### Role\nYou are a helpful assistant that generates high-quality multiple choice questions (MCQs). You will receive content from the user.\n\nGenerate **{{ $('On form submission').item.json['Number of Questions'] }}** MCQs in the **{{ $('On form submission').item.json['Output Format'] }}** format.\n\n### Supported Output Formats\n\n**1. List Format (HTML Example):**\n```\n<p><strong>1. What is the capital of France?</strong><br>\nOption A: Paris<br>\nOption B: Berlin<br>\nOption C: Madrid<br>\nOption D: Rome<br>\nAnswer Key: <strong>A</strong><br></p>\n```\n\n**2. Table Format (HTML Table):**\n```\n<table border=\"1\">\n  <tr>\n    <th>Question</th><th>Option A</th><th>Option B</th><th>Option C</th><th>Option D</th><th>Correct Option</th>\n  </tr>\n  <tr>\n    <td>What is the capital of France?</td>\n    <td>Paris</td><td>Berlin</td><td>Madrid</td><td>Rome</td><td>A</td>\n  </tr>\n</table>\n```\n\n### Notes:\n- Each question must have **exactly 4 options**.\n- In **list format**, use `<br>` to separate options.\n- Output must be **valid HTML** as a single string.\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        160,
+        -260
+      ],
+      "id": "75018209-7599-482f-80be-7fdd7106aa32",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.5-flash",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        240,
+        -40
+      ],
+      "id": "3c53dfc4-0c28-4605-9346-41f4d8b267ff",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "ndfTbuuXN4N1ve8w",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "subject": "={{ $('On form submission').item.json['Number of Questions'] }} MCQs from \"{{ $('On form submission').item.json.File.filename }}\"",
+        "message": "={{ $json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        520,
+        -260
+      ],
+      "id": "da29dcc2-ed9e-41a1-a1fc-70fb8f17c148",
+      "name": "Send a message",
+      "webhookId": "f4ce937e-e1db-4475-be24-b7733d96fd79",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ZXY6nbPHv8KkHtkB",
+          "name": "Gmail account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "rules": {
+          "values": [
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "leftValue": "={{ $json.File.mimetype }}",
+                    "rightValue": "=text/plain",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals"
+                    },
+                    "id": "0f50027c-60a9-4c0e-82bd-466e65471bdb"
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "text"
+            },
+            {
+              "conditions": {
+                "options": {
+                  "caseSensitive": true,
+                  "leftValue": "",
+                  "typeValidation": "strict",
+                  "version": 2
+                },
+                "conditions": [
+                  {
+                    "id": "2c62c905-1ced-4196-9bb3-ef8b10808eae",
+                    "leftValue": "={{ $json.File.mimetype }}",
+                    "rightValue": "application/pdf",
+                    "operator": {
+                      "type": "string",
+                      "operation": "equals",
+                      "name": "filter.operator.equals"
+                    }
+                  }
+                ],
+                "combinator": "and"
+              },
+              "renameOutput": true,
+              "outputKey": "pdf"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.switch",
+      "typeVersion": 3.2,
+      "position": [
+        -280,
+        -260
+      ],
+      "id": "471bdb57-a3a4-4794-8fb3-71a53be49ffc",
+      "name": "Switch"
+    },
+    {
+      "parameters": {
+        "operation": "text",
+        "binaryPropertyName": "=File",
+        "destinationKey": "text",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -360
+      ],
+      "id": "5659eb9f-4bc4-4bb4-afd0-0552da9e6649",
+      "name": "Extract from TXT"
+    },
+    {
+      "parameters": {
+        "operation": "pdf",
+        "binaryPropertyName": "File",
+        "options": {
+          "joinPages": true
+        }
+      },
+      "type": "n8n-nodes-base.extractFromFile",
+      "typeVersion": 1,
+      "position": [
+        -60,
+        -160
+      ],
+      "id": "463dc7d9-8bbc-4e4a-bc16-60596500e865",
+      "name": "Extract from PDF"
+    },
+    {
+      "parameters": {
+        "content": "### This form now accepts `TXT`, and `PDF` files",
+        "height": 240,
+        "width": 220
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        -560,
+        -340
+      ],
+      "id": "4ba6b414-9fc2-4eb5-a942-101f21d592aa",
+      "name": "Sticky Note"
+    },
+    {
+      "parameters": {
+        "content": "### 1. Update the credentials for the Chat Model",
+        "height": 80,
+        "width": 220,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        340,
+        -40
+      ],
+      "id": "8e3595db-fe58-4282-b89a-953256988fbe",
+      "name": "Sticky Note1"
+    },
+    {
+      "parameters": {
+        "content": "### 2. Update the credentials and *To* email field",
+        "height": 80,
+        "width": 220,
+        "color": 3
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        640,
+        -180
+      ],
+      "id": "d4a9b5e0-8245-459a-b4b5-03f75c6a8b1d",
+      "name": "Sticky Note2"
+    },
+    {
+      "parameters": {
+        "content": "### Inspect the System Message ⇣ ",
+        "height": 80,
+        "width": 200,
+        "color": 6
+      },
+      "type": "n8n-nodes-base.stickyNote",
+      "typeVersion": 1,
+      "position": [
+        180,
+        -320
+      ],
+      "id": "fba59c5f-8dcd-4bbf-a88e-1b9bc803654c",
+      "name": "Sticky Note3"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "Switch",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Switch": {
+      "main": [
+        [
+          {
+            "node": "Extract from TXT",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Extract from PDF",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from PDF": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Extract from TXT": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "816f4d47-4ba7-49a8-bf86-6d98295b8445",
+  "meta": {
+    "instanceId": "f876e51b001ad52de39d85e47e34b1d6bee14122f80f298b7e017a745ea6c45b"
+  },
+  "id": "JXf6mx0hrwzIZvEK",
+  "tags": []
+}
