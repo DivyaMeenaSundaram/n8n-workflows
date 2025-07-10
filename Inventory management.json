@@ -1,0 +1,474 @@
+{
+  "name": "Inventory management",
+  "nodes": [
+    {
+      "parameters": {
+        "model": {
+          "__rl": true,
+          "mode": "list",
+          "value": "gpt-4.1-mini"
+        },
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatOpenAi",
+      "typeVersion": 1.2,
+      "position": [
+        -20,
+        140
+      ],
+      "id": "e3339a79-9040-4324-a8d2-a4e60b9db54d",
+      "name": "OpenAI Chat Model",
+      "credentials": {
+        "openAiApi": {
+          "id": "YF0ys0d7wKTSIhag",
+          "name": "n8n free OpenAI API credits"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "updates": [
+          "message"
+        ],
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegramTrigger",
+      "typeVersion": 1.2,
+      "position": [
+        -280,
+        -80
+      ],
+      "id": "67ed7bac-c31f-4bf0-839a-89ee1b3a68f1",
+      "name": "Telegram Trigger",
+      "webhookId": "5c94df38-a06f-4242-90af-c42400046f1b",
+      "credentials": {
+        "telegramApi": {
+          "id": "XYdcXXUz0NjvtylX",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "chatId": "={{ $('Telegram Trigger').item.json.message.from.id }}",
+        "text": "={{ $json.output }}",
+        "additionalFields": {}
+      },
+      "type": "n8n-nodes-base.telegram",
+      "typeVersion": 1.2,
+      "position": [
+        340,
+        -80
+      ],
+      "id": "2bc44df7-9f97-4a5a-a028-81760b388b14",
+      "name": "Send a text message",
+      "webhookId": "20c487f9-6974-42d2-b517-9fb0034483cd",
+      "credentials": {
+        "telegramApi": {
+          "id": "XYdcXXUz0NjvtylX",
+          "name": "Telegram account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.message.text }}",
+        "options": {
+          "systemMessage": "## Role  \nYou are an **Inventory-Management Assistant**. Maintain accurate stock, answer queries, compute aggregates, and suggest restock when needed.\n\n\n## Behavior Rules  \n\n\n- **Minimal Replies**: Respond clearly and directly.  \n- **Verb-Based Actions**:  \n  - *First-person* (\"I bought\", \"we received\") → **Add** stock.  \n  - *First-person* (\"I sold\", \"we used\") → **Remove** stock.  \n  - *Third-person* (\"Alex bought\", \"they purchased\") → **Always Remove** stock.  \n- **Proactive**: If updated qty ≤ threshold, suggest restock.  \n- Ask questions only when item or quantity is unclear.\n\n\n## Tools  \n- **Airtable read**: Fetch current data.  \n- **Airtable upsert**: Save updates.  \n- **Calculator**: All math, including stock changes and aggregates.\n\n\n## Stock Logic  \n\n\n| Action        | Triggers                               | Rule                                                             |\n| -------------| ----------------------------------------| -----------------------------------------------------------------|\n| Add Stock     | \"I bought\", \"we purchased\", etc.        | New = Old + Added. Confirm. Suggest restock if ≤ threshold.      |\n| Remove Stock  | \"I sold\", \"Alex bought\", etc.           | If Removed ≤ Old: New = Old − Removed; else New = 0. Suggest restock. |\n\n\n- Quantity cannot go below 0.  \n- Reject duplicate item creation.  \n- Item names: Propercase, singular.\n\n\n## Query Responses  \n\n\n- **All inventory** / **Status** → Show all items in format:  \n  Item Name  \n  Qty: 42  \n  Threshold: 10\n\n\n- **What needs restocking** → Items with Qty < Threshold.  \n- **Out of stock** → Items with Qty = 0.\n\n\n## Aggregation (on demand)  \nReturn:\n\n\nTotal stock: <sum>  \nMinimum stock: <qty> (Item)  \nMaximum stock: <qty> (Item)  \nAverage stock: <value>\n"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        -20,
+        -80
+      ],
+      "id": "05c887c3-38cb-4d51-91b7-e8c2e5a4be6d",
+      "name": "Inventory management"
+    },
+    {
+      "parameters": {
+        "descriptionType": "manual",
+        "toolDescription": "Fetches items and item details from my inventory database on airtable",
+        "operation": "search",
+        "base": {
+          "__rl": true,
+          "value": "app1FkpIy3ipt5bAy",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://airtable.com/app1FkpIy3ipt5bAy"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblXVD3bWSFjfzNu0",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/app1FkpIy3ipt5bAy/tblXVD3bWSFjfzNu0"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        120,
+        200
+      ],
+      "id": "64e9b841-6a3e-441c-8a3a-4ebfb9d42632",
+      "name": "Read",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "hil9FWQoojC80Y4P",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "operation": "upsert",
+        "base": {
+          "__rl": true,
+          "value": "app1FkpIy3ipt5bAy",
+          "mode": "list",
+          "cachedResultName": "Inventory",
+          "cachedResultUrl": "https://airtable.com/app1FkpIy3ipt5bAy"
+        },
+        "table": {
+          "__rl": true,
+          "value": "tblXVD3bWSFjfzNu0",
+          "mode": "list",
+          "cachedResultName": "Table 1",
+          "cachedResultUrl": "https://airtable.com/app1FkpIy3ipt5bAy/tblXVD3bWSFjfzNu0"
+        },
+        "columns": {
+          "mappingMode": "defineBelow",
+          "value": {
+            "Item Name": "={{ /*n8n-auto-generated-fromAI-override*/ $fromAI('Item_Name__using_to_match_', `update my inventory on airtable`, 'string') }}"
+          },
+          "matchingColumns": [
+            "Item Name"
+          ],
+          "schema": [
+            {
+              "id": "id",
+              "displayName": "id",
+              "required": false,
+              "defaultMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": true,
+              "removed": true
+            },
+            {
+              "id": "Item Name",
+              "displayName": "Item Name",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "string",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Current Quantity",
+              "displayName": "Current Quantity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": false
+            },
+            {
+              "id": "Threshold Quantity",
+              "displayName": "Threshold Quantity",
+              "required": false,
+              "defaultMatch": false,
+              "canBeUsedToMatch": true,
+              "display": true,
+              "type": "number",
+              "readOnly": false,
+              "removed": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.airtableTool",
+      "typeVersion": 2.1,
+      "position": [
+        220,
+        200
+      ],
+      "id": "58c5a3ed-2254-4888-9116-597e655a0dd5",
+      "name": "Upsert",
+      "credentials": {
+        "airtableTokenApi": {
+          "id": "hil9FWQoojC80Y4P",
+          "name": "Airtable Personal Access Token account"
+        }
+      }
+    },
+    {
+      "parameters": {},
+      "type": "@n8n/n8n-nodes-langchain.toolCalculator",
+      "typeVersion": 1,
+      "position": [
+        320,
+        200
+      ],
+      "id": "d625ce5c-961e-42d9-a738-9a708b95b179",
+      "name": "Calculator"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.output }}",
+        "options": {
+          "systemMessage": "You are ## Role  \nYou are an agent that filters and outputs only items with quantity = 0.\n\n\n## Input Format  \nEach item will be given in the format:\n\n\nItem Name  \nQty: <number>  \nThreshold: <number> (optional)\n\n\n## Output Rules  \n- Print only the names of items where `Qty` is 0.  \n- One item per line.  \n- Do not output anything if no items have `Qty: 0`.  \n- Output must contain **only item names**, no extra text or formatting.\na helpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        380,
+        -420
+      ],
+      "id": "291c4817-54ff-4250-844f-1df3a4b3d318",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        380,
+        -240
+      ],
+      "id": "fcd96296-bb4c-4126-91d4-b1146c5dc682",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "iudXHwHXq69usPmX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "b15327f0-0e1d-4a10-abe4-510be646b14c",
+              "leftValue": "",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        540,
+        -138.95357453525173
+      ],
+      "id": "908ce5ae-a4cf-40c0-83aa-5995ed825c7c",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "77b4d100-655c-45fa-9257-4adda8329887",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "equals",
+                "name": "filter.operator.equals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        740,
+        -420
+      ],
+      "id": "8ab0357a-e383-4b54-a143-0bbca1ee00e4",
+      "name": "If1"
+    },
+    {
+      "parameters": {
+        "sendTo": "divyameena.sundaram@gmail.com",
+        "subject": "Restocking needed",
+        "message": "={{ $('AI Agent').item.json.output }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        960,
+        -471.20357587635624
+      ],
+      "id": "7b7445b7-07b0-4f7d-80ee-e9d852d6c902",
+      "name": "Send a message",
+      "webhookId": "368b4a7e-7df6-4111-87bf-340b65e533ee",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ricJqaNtuJ5Pge92",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "OpenAI Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "Inventory management",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Telegram Trigger": {
+      "main": [
+        [
+          {
+            "node": "Inventory management",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Inventory management": {
+      "main": [
+        [
+          {
+            "node": "Send a text message",
+            "type": "main",
+            "index": 0
+          },
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Read": {
+      "ai_tool": [
+        [
+          {
+            "node": "Inventory management",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Upsert": {
+      "ai_tool": [
+        [
+          {
+            "node": "Inventory management",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Calculator": {
+      "ai_tool": [
+        [
+          {
+            "node": "Inventory management",
+            "type": "ai_tool",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If1": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "6c0aaa9a-2a91-4172-9d81-53ec68651823",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "8b4e1ccff9e5b9da3ed3844acff9e67a743add2dd1fb6ce65bef8d2f8eb1ca89"
+  },
+  "id": "SRHXsiACAPmMesmD",
+  "tags": []
+}
