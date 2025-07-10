@@ -1,0 +1,193 @@
+{
+  "name": "Sentiment Analysis",
+  "nodes": [
+    {
+      "parameters": {
+        "formTitle": "Your product review",
+        "formDescription": "Please fill the form and let us know ur thoughts",
+        "formFields": {
+          "values": [
+            {
+              "fieldLabel": "Name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Phone Number",
+              "fieldType": "number",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Product name",
+              "requiredField": true
+            },
+            {
+              "fieldLabel": "Review",
+              "fieldType": "textarea",
+              "requiredField": true
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.formTrigger",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "99c54421-620d-4dca-9ace-4883baea45af",
+      "name": "On form submission",
+      "webhookId": "2a25e2b1-fba5-4d4d-8d65-47cbe652b634"
+    },
+    {
+      "parameters": {
+        "promptType": "define",
+        "text": "={{ $json.Name }}\n{{ $json['Phone Number'] }}\n{{ $json['Product name'] }}\n{{ $json.Review }}",
+        "options": {
+          "systemMessage": "You are a he# Role\nYou are a sentiment analyzer. Perform sentiment analysis on the product review you receive and output it in the output format as mentioned below.\n\n\n# Input Format\nThe input payload will contain:\nName, Phone, Product Name and product review.\n\n\n# Output Format\nOutput only the following, in this exact order and format, with no extra text:\n<pre>\nName: <Name>\nPhone: <Phone>\nProduct: <Product Name>\nReview: <Review>\nSentiment: \nlpful assistant"
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.agent",
+      "typeVersion": 2,
+      "position": [
+        220,
+        0
+      ],
+      "id": "ff1a19ca-613a-49f2-896d-44b94edba3d8",
+      "name": "AI Agent"
+    },
+    {
+      "parameters": {
+        "modelName": "models/gemini-2.0-flash-lite",
+        "options": {}
+      },
+      "type": "@n8n/n8n-nodes-langchain.lmChatGoogleGemini",
+      "typeVersion": 1,
+      "position": [
+        220,
+        180
+      ],
+      "id": "a679736e-f9e3-4153-b051-12c86678a68d",
+      "name": "Google Gemini Chat Model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "iudXHwHXq69usPmX",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 2
+          },
+          "conditions": [
+            {
+              "id": "1962f2fd-9cc5-4357-afc3-2e5513509e59",
+              "leftValue": "={{ $json.output }}",
+              "rightValue": "Sentiment: negative",
+              "operator": {
+                "type": "string",
+                "operation": "contains"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.2,
+      "position": [
+        580,
+        0
+      ],
+      "id": "eeff21a7-e9bd-4986-a4b1-d45e4c0e73f9",
+      "name": "If"
+    },
+    {
+      "parameters": {
+        "sendTo": "divyameena.s@vitap.ac.in",
+        "subject": "Negative review alert",
+        "message": "=The following review was received from  {{ $('On form submission').item.json.Name }}. \nThe review was for the product {{ $('On form submission').item.json['Product name'] }}. \nThe review is {{ $('On form submission').item.json.Review }}. \nThe customer can be reached at {{ $('On form submission').item.json['Phone Number'] }}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.gmail",
+      "typeVersion": 2.1,
+      "position": [
+        800,
+        -56.2421875
+      ],
+      "id": "2b64b6b5-0f9e-421a-858d-0beb64156ba1",
+      "name": "Send a message",
+      "webhookId": "080491e4-fc98-4386-98af-703f8adb3e05",
+      "credentials": {
+        "gmailOAuth2": {
+          "id": "ricJqaNtuJ5Pge92",
+          "name": "Gmail account"
+        }
+      }
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "On form submission": {
+      "main": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Google Gemini Chat Model": {
+      "ai_languageModel": [
+        [
+          {
+            "node": "AI Agent",
+            "type": "ai_languageModel",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "AI Agent": {
+      "main": [
+        [
+          {
+            "node": "If",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "If": {
+      "main": [
+        [
+          {
+            "node": "Send a message",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1"
+  },
+  "versionId": "8358f272-bcae-4787-a28e-5adc31517e60",
+  "meta": {
+    "instanceId": "8b4e1ccff9e5b9da3ed3844acff9e67a743add2dd1fb6ce65bef8d2f8eb1ca89"
+  },
+  "id": "snczXRCA3bknDNh8",
+  "tags": []
+}
